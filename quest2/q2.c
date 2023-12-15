@@ -2,14 +2,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-typedef struct arq
-{
-    int index;
-    int read;
-} arq;
-
-
-arq* arq_buffer = NULL;
+int* arq_buffer = NULL;
 int* contadores = NULL;
 
 pthread_mutex_t* mutex;
@@ -26,13 +19,7 @@ int main(){
     printf("Quantos tipos de produtos?:\n");
     scanf("%d", &produtos);
 
-    arq_buffer = (arq*) malloc(sizeof(arq)*num_arq);
-    for (int j = 0; j<num_arq; j++)
-    {
-        arq_buffer[j].index = j;
-        arq_buffer[j].read = 0;
-    }
-
+    arq_buffer = (int*) calloc(num_arq, sizeof(int));
     contadores = (int*) calloc(produtos, sizeof(int));
     
     pthread_t reader[num_threads];
@@ -43,7 +30,7 @@ int main(){
     {
 	    ids[i] = (int*) malloc(sizeof(int)); 
 		*ids[i] = i;
-  	    pthread_create(&reader[i],NULL, leitura,(void *) ids[i]);  
+  	    pthread_create(&reader[i], NULL, leitura,(void *) ids[i]);  
     }
 
     pthread_exit(NULL);
@@ -66,24 +53,33 @@ int read_file(int i)
     while(control<=produtos);
     {
         fscanf(dados, "%100[^\n]\n", linha);
+        int temp_qtd = atoi(linha);
+        //mutex pra adicionar qtd no array de contadores e confirmar que o arquivo foi lido
 
+        control++;
     }
     fclose(dados);
-    arq_buffer[i].read = 1;
-
+    return i;
 }
 
 
 void* leitura(void* threadid)
 {
     int v;
+    //checa se o ciclo ta vendo certo
     printf("Thread %d iniciada, lendo arquivo %d: ", *((int*) threadid), *((int*) threadid)+1);
     read_file(*((int*)threadid)+1);
-    if(num_threads!=num_arq){
+    printf("Thread %d terminou arquivo %d", *((int*) threadid), *((int*) threadid)+1);
+
+    if(num_threads<=num_arq){
         for(int i = num_threads; i<num_arq; i++)
         {
-            v = read_file(i);
-            printf("Thread %d leu arquivo %d ", *((int*) threadid), v);
+            if(!arq_buffer[i])
+            {
+                arq_buffer[i] = 1;
+                v = read_file(i+1);
+                printf("Thread %d leu arquivo %d ", *((int*) threadid), v);
+            } 
         }
         printf("Thread %d terminou: ", *((int*) threadid));
     }
