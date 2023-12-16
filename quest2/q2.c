@@ -89,7 +89,6 @@ int read_file(int i)
     return i;
 }
 
-
 void* leitura(void* threadid)
 {
     int v;
