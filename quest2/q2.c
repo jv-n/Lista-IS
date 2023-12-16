@@ -52,9 +52,9 @@ int main(){
         }    
     
     printf("O valor final de cada produto foi:\n");
-    for(int i = 1; i<=produtos; i++)
+    for(int i = 0; i<produtos; i++)
     {
-        printf("Produto tipo %d = %d\n", i, contadores[i-1]);
+        printf("Produto tipo %d = %d\n", i+1, contadores[i]);
     }
 
     pthread_exit(NULL);
@@ -62,7 +62,7 @@ int main(){
 
 int read_file(int i)
 {
-    arq_buffer[i] = 1;
+    arq_buffer[i-1] = 1;
     FILE* dados;
     char name[100];
     char linha[100];
@@ -74,17 +74,16 @@ int read_file(int i)
         printf("Erro ou arquivo nao existe\n");
         exit(1);
     }
-    int control = 1;
-    while(control<=produtos)
+    int control = 0;
+    while(control<produtos)
     {
         fscanf(dados, "%100[^\n]\n", linha);
         int temp_qtd = atoi(linha);
         
-        pthread_mutex_lock(&mutex[control-1]);
-        contadores[control-1]+=temp_qtd;
-        pthread_mutex_unlock(&mutex[control-1]);
-        
+        pthread_mutex_lock(&mutex[control]);
+        contadores[control]+=temp_qtd;        
         control++;
+        pthread_mutex_unlock(&mutex[control-1]);
     }
     fclose(dados);
     return i;
@@ -99,7 +98,7 @@ void* leitura(void* threadid)
     read_file(*((int*)threadid)+1);
     printf("Thread %d terminou arquivo %d\n", *((int*) threadid), *((int*) threadid)+1);
 
-    if(num_threads<=num_arq)
+    if(num_threads<num_arq)
     {
         for(int i = num_threads; i<num_arq; i++)
         {
@@ -108,6 +107,7 @@ void* leitura(void* threadid)
             {
                 arq_buffer[i] = 1;
                 pthread_mutex_unlock(&mutex_file[i]);
+                printf("Thread %d lendo arquivo %d\n", *((int*) threadid), i+1);
                 v = read_file(i+1);
                 printf("Thread %d leu arquivo %d\n", *((int*) threadid), v);
             } else pthread_mutex_unlock(&mutex_file[i]);
