@@ -6,6 +6,7 @@ int* arq_buffer = NULL;
 int* contadores = NULL;
 
 pthread_mutex_t* mutex;
+pthread_mutex_t* mutex_file;
 void* leitura();
 
 int num_arq, num_threads, produtos;
@@ -25,6 +26,10 @@ int main(){
     for(int j = 0; j<produtos; j++)
     {
         pthread_mutex_init(&mutex[j], NULL);
+    }
+    for(int j = 0; j<num_arq; j++)
+    {
+        pthread_mutex_init(&mutex_file[j], NULL);
     }
     
     pthread_t reader[num_threads];
@@ -76,15 +81,19 @@ void* leitura(void* threadid)
     read_file(*((int*)threadid)+1);
     printf("Thread %d terminou arquivo %d", *((int*) threadid), *((int*) threadid)+1);
 
-    if(num_threads<=num_arq){
+    if(num_threads<=num_arq)
+    {
         for(int i = num_threads; i<num_arq; i++)
         {
+            pthread_mutex_lock(&mutex_file[i]);
             if(!arq_buffer[i])
             {
                 arq_buffer[i] = 1;
+                pthread_mutex_unlock(&mutex_file[i]);
                 v = read_file(i+1);
                 printf("Thread %d leu arquivo %d ", *((int*) threadid), v);
-            }
+            } 
+            pthread_mutex_unlock(&mutex_file[i]);
         }
         printf("Thread %d terminou: ", *((int*) threadid));
     }
