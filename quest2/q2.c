@@ -22,6 +22,11 @@ int main(){
     arq_buffer = (int*) calloc(num_arq, sizeof(int));
     contadores = (int*) calloc(produtos, sizeof(int));
     
+    for(int j = 0; j<produtos; j++)
+    {
+        pthread_mutex_init(&mutex[j], NULL);
+    }
+    
     pthread_t reader[num_threads];
     int* ids[num_threads];
 
@@ -54,7 +59,7 @@ int read_file(int i)
     {
         fscanf(dados, "%100[^\n]\n", linha);
         int temp_qtd = atoi(linha);
-        //mutex pra adicionar qtd no array de contadores e confirmar que o arquivo foi lido
+        
 
         control++;
     }
@@ -79,7 +84,7 @@ void* leitura(void* threadid)
                 arq_buffer[i] = 1;
                 v = read_file(i+1);
                 printf("Thread %d leu arquivo %d ", *((int*) threadid), v);
-            } 
+            }
         }
         printf("Thread %d terminou: ", *((int*) threadid));
     }
