@@ -50,7 +50,6 @@ void* funcao_robo(void* arg) {
 
           while (tamanho_fila == 0) { // Fica aguardando um pedido enquanto a fila esta vazia
               pthread_cond_wait(&fill, &mutex);
-              //printf("Aguardando pedidos\n");
           }
 
           // Remove um pedido da fila
@@ -70,7 +69,6 @@ void* funcao_mesa(void* arg) {
 
           while (tamanho_fila == Q) { // Espera pra colocar um pedido na fila se ela estiver cheia
               pthread_cond_wait(&empty, &mutex);
-              //printf("Aguardando esvaziar\n");
           }
 
           // Adiciona um pedido à fila
