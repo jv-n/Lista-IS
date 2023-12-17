@@ -25,8 +25,6 @@ int main() {
   pthread_t robos[N];
   pthread_t mesas[M];
 
-  pthread_mutex_init(&mutex, NULL);
-
   for (int i = 0; i < N; i++) { // Cria a thread
     pthread_create(&robos[i], NULL, funcao_robo, NULL);
   }
