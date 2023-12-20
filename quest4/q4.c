@@ -17,10 +17,18 @@ void* soma_diagonais();
 
 int main()
 {
+    /*
+    
+    A implementação desse código usa threads para calcular as somas de cada parte da matriz e os coloca num vetor
+    N threads para as colunas, N threads para as linhas, 1 thread para cada diagonal (principal e secundária).
+    Dois processos (nesse caso threads em execução) não estão ao mesmo tempo em uma região crítica, visto que 
+    cada thread só acessa o vetor de somas correspondente a sua threadid.
+
+    */
 
     for(int j = 0; j<N; j++)
     {
-        sum_linhas[j] = 0; sum_colunas[j] = 0;
+        sum_linhas[j] = 0; sum_colunas[j] = 0; //zera os vetores
         if (j<2)
         {
             sum_Diag[j] = 0;
@@ -32,7 +40,7 @@ int main()
         }
     }
 
-    pthread_t threads_linhas[N];
+    pthread_t threads_linhas[N]; 
     pthread_t threads_colunas[N];
     pthread_t threads_diagonais[2];
     int*ids[N+N+2];
@@ -40,18 +48,18 @@ int main()
     int x = 0;
     for(x = 0; x<N; x++)
     {
-        ids[x] = (int*) malloc(sizeof(int));
-        *ids[x] = x;
-  	    pthread_create(&threads_linhas[x], NULL, soma_linhas,(void*)ids[x]);
+        ids[x] = (int*) malloc(sizeof(int)); // aloca espaço para os ponteiros de id
+        *ids[x] = x; //define o ponteiro de ids das threads das linhas
+  	    pthread_create(&threads_linhas[x], NULL, soma_linhas,(void*)ids[x]); //cria e define a função das threads das linhas
 
         ids[x+N] = (int*) malloc(sizeof(int));
-        *ids[x+N] = x+N;
-        pthread_create(&threads_colunas[x+N], NULL, soma_colunas, (void*)ids[x+N]); 
+        *ids[x+N] = x+N; //ponteiro de ids das threads das colunas
+        pthread_create(&threads_colunas[x+N], NULL, soma_colunas, (void*)ids[x+N]); //cria e define a função das threads das linhas
     }
 
     for(int i = 0; i<N; i++)
     {
-  	    pthread_join(threads_linhas[i], NULL);
+  	    pthread_join(threads_linhas[i], NULL); // termina as threads
         pthread_join(threads_colunas[i+N], NULL);
         x++; 
     }
@@ -60,35 +68,35 @@ int main()
     {
          ids[i] = (int*) malloc(sizeof(int));
         *ids[i] = i;
-  	    pthread_create(&threads_diagonais[i], NULL, soma_diagonais,(void*)ids[i]);
+  	    pthread_create(&threads_diagonais[i], NULL, soma_diagonais,(void*)ids[i]); //calcula a soma das diagonais
     }
 
     for (int i = x; i<N+N+2; i++)
     {
-        pthread_join(threads_diagonais[i], NULL);
+        pthread_join(threads_diagonais[i], NULL); // termina as threads das diagonais
     }
 
     int magic = 0;
     //int y = sum_Diag[0]; int z = sum_Diag[1];
-    if(sum_Diag[0] == sum_Diag[1])
+    if(sum_Diag[0] == sum_Diag[1]) //se as diagonais n tiverem a mesma soma, a matriz não é quadrado mágico
     {
         int i = 1;
         while (i<N)
         {
             if(sum_colunas[i]!=sum_colunas[0])
             {
-                printf("%d e %d\n", sum_colunas[i], sum_colunas[0]);
+                //printf("%d e %d\n", sum_colunas[i], sum_colunas[0]);
                 break;
             }
             if(sum_linhas[i]!=sum_linhas[0])
             {
-                printf("%d e %d\n", sum_linhas[i], sum_linhas[0]);
+                //printf("%d e %d\n", sum_linhas[i], sum_linhas[0]);
                 break;
             }
             i++;
             if(i==N) magic = 1;
         }
-    } else printf("%d e %d\n", sum_Diag[0], sum_Diag[1]);
+    } //else printf("%d e %d\n", sum_Diag[0], sum_Diag[1]);
 
 
     if(!magic) printf("Nao eh magica\n");
