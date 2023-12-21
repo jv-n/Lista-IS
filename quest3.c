@@ -71,9 +71,9 @@ int main() {
     double cpu_time_used;
 
     start = clock();
-    //0.000679 segundos com 1 threads.
-    //0.000479 segundos com 2 threads
-    //0.000634 segundos com 4 threads
+    //0.000731 segundos com 1 threads.  
+    //0.000524 segundos com 2 threads
+    //0.000498 segundos com 4 threads
     printf("Qual o numero de threads que irao ser utilizadas?\n");
     scanf("%d",&num_threads);
 
@@ -117,7 +117,7 @@ int main() {
 
     end = clock();
 
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;   //calcular o tempo de execucao do codigo
     printf("Tempo de execução: %f segundos com %d threads.\n", cpu_time_used,num_threads);
 
     pthread_exit(NULL);
