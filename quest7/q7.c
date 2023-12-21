@@ -20,6 +20,8 @@ int main(){
     for(int j = 0; j<5; j++)
     {
         pthread_mutex_init(&mutex[j], NULL);
+        pthread_cond_init(&intersecao_ocupd[j], NULL);
+        pthread_cond_init(&intersecao_livre[j], NULL); 
     }
 
     for(int i = 0; i<10; i++)
@@ -36,6 +38,8 @@ int main(){
     for(int j = 0; j<5; j++)
     {
         pthread_mutex_destroy(&mutex[j]);
+        pthread_cond_destroy(&intersecao_ocupd[j]);
+        pthread_cond_destroy(&intersecao_livre[j]); 
     }
 
     pthread_exit(NULL);
