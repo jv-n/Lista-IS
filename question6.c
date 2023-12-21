@@ -15,7 +15,7 @@ typedef struct {
 
 // Define duas matrizes esparsas e um vetor denso.
 Par matriz1[4][3] = {{{3, 2.0, 1}, {1, -1.0, 1}}, {{3, -1.0, 1}, {1, 2.0, 1}, {2, -1.0, 1}}, {{1, -1.0, 1}, {2, 2.0, 1}, {3, -1.0, 1}}, {{2, -1.0, 1}, {3, 2.0, 1}}};
-Par matrizEsparsa[4][3] = {{{3, 2.0, 1}, {1, -1.0, 1}}, {{0, -1.0, 1}, {1, 2.0, 1}, {2, -1.0, 1}}, {{1, -1.0, 1}, {2, 2.0, 1}, {3, -1.0, 1}}, {{2, -1.0, 1}, {3, 2.0, 1}}};
+Par matrizEsparsa[4][3] = {{{3, 2.0, 1}, {1, -1.0, 1}}, {{3, -1.0, 1}, {1, 2.0, 1}, {2, -1.0, 1}}, {{1, -1.0, 1}, {2, 2.0, 1}, {3, -1.0, 1}}, {{2, -1.0, 1}, {3, 2.0, 1}}};
 float vetorDense[4] = {1.0, 2.0, 3.0, 4.0};
 
 // Define uma matriz densa e uma matriz para armazenar os resultados.
@@ -31,7 +31,7 @@ void *threadCode(void *tid)
   for (int i = threadId; i < LINHAS; i = i + NUM_THREADS)
   {
     // Loop que processa cada elemento válido na linha i da matriz esparsa.
-    for (int k = 0; k < 3; k++) 
+    for (int k = 0; k < (COLUNAS - 1); k++) 
     {
       // Verifica se o par é válido antes de acessar o valor e a coluna.
       if (matriz1[i][k].valido) {
@@ -42,7 +42,7 @@ void *threadCode(void *tid)
         float valorEsparsa = 0.0;
         
         // Encontra o elemento correspondente em matrizEsparsa.
-        for (int j = 0; j < 3; j++) {
+        for (int j = 0; j < (COLUNAS - 1); j++) {
           if (matrizEsparsa[i][j].valido && matrizEsparsa[i][j].coluna == coluna) {
             valorEsparsa = matrizEsparsa[i][j].valor;
             break;
