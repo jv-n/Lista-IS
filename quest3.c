@@ -71,7 +71,9 @@ int main() {
     double cpu_time_used;
 
     start = clock();
-
+    //0.000679 segundos com 1 threads.
+    //0.000479 segundos com 2 threads
+    //0.000634 segundos com 4 threads
     printf("Qual o numero de threads que irao ser utilizadas?\n");
     scanf("%d",&num_threads);
 
