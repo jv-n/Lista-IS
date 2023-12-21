@@ -69,7 +69,7 @@ void* mergeSort(void* arg){
 }
 
 int main(){ 
-  int i, r1,n;
+  int i, n;
 
   printf("Quantidade de numeros a serem ordenados\n");   
   scanf("%d", &n);
