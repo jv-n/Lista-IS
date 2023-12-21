@@ -17,7 +17,7 @@ int main(){
     pthread_t threads[10];
     int* ids[10];
 
-    for(int j = 0; j<10; j++)
+    for(int j = 0; j<5; j++)
     {
         pthread_mutex_init(&mutex[j], NULL);
     }
@@ -33,7 +33,7 @@ int main(){
     {
         pthread_join(threads[i], NULL);
     }
-    for(int j = 0; j<10; j++)
+    for(int j = 0; j<5; j++)
     {
         pthread_mutex_destroy(&mutex[j]);
     }
@@ -48,6 +48,7 @@ void entrando(int cont, int i)
         printf("Trem %d tentando entrar na intersecao %d \n", i, cont);
         while(intersecao[cont] == 2)//se ha 2 trens em 1 intersecao, espera
         {
+            printf("Trem %d esperando entrar na intersecao %d \n", i, cont);
             pthread_cond_wait(&intersecao_ocupd[cont], &mutex[cont]);
         }
         intersecao[cont]++;
