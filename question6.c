@@ -4,7 +4,8 @@
 
 #define NUM_THREADS 4 
 #define LINHAS 4     
-#define COLUNAS 4     
+#define COLUNAS 4    
+#define MAX_COLUNAS 3
 
 // Define uma estrutura para representar um par de valores: um índice de coluna, um valor e um indicador de validade.
 typedef struct {
@@ -31,7 +32,7 @@ void *threadCode(void *tid)
   for (int i = threadId; i < LINHAS; i = i + NUM_THREADS)
   {
     // Loop que processa cada elemento válido na linha i da matriz esparsa.
-    for (int k = 0; k < (COLUNAS - 1); k++) 
+    for (int k = 0; k < MAX_COLUNAS; k++) 
     {
       // Verifica se o par é válido antes de acessar o valor e a coluna.
       if (matriz1[i][k].valido) {
@@ -42,7 +43,7 @@ void *threadCode(void *tid)
         float valorEsparsa = 0.0;
         
         // Encontra o elemento correspondente em matrizEsparsa.
-        for (int j = 0; j < (COLUNAS - 1); j++) {
+        for (int j = 0; j < MAX_COLUNAS; j++) {
           if (matrizEsparsa[i][j].valido && matrizEsparsa[i][j].coluna == coluna) {
             valorEsparsa = matrizEsparsa[i][j].valor;
             break;
