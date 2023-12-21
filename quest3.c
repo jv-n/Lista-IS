@@ -1,174 +1,129 @@
-//apenas teste
-
-/*#include <stdio.h>
+#define _XOPEN_SOURCE 600
+#define N 2
+#define P 2
+#include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <time.h>
 
-#define N 2
-#define P 4
-
-double A[N][N] = {{2, 1}, {5, 7}};
-double b[N] = {11, 13};
-double x[N] = {1, 1};
-
-pthread_t threads[P];
+double A[N][N]= {{2,1},{5,7}}; // Matriz dos coeficientes   
+double B[]={11,13}; // Vetor de termos independentes
+//double X[]={1,1}; // Vetor solução      resultado de x1 =0.902...   x2=1.609...    x3=0.463...
+double** X_new; // Vetor solução temporário
 pthread_barrier_t barrier;
+pthread_mutex_t* mutex_uso;
+int* buffer_uso;
 
-void *jacobi_thread(void *arg) {
-    int id = *(int *)arg;
-    int i, j;
-    double sigma;
+int num_threads; // Número de threads
 
-    for (i = id; i < N; i += P) {
-        while (1) {
-            sigma = 0;
-            for (j = 0; j < N; j++) {
-                if (j != i) {
-                    sigma += A[i][j] * x[j];
-                }
-            }
-            x[i] = (b[i] - sigma) / A[i][i];
-            pthread_barrier_wait(&barrier);
-            // check for convergence
-            // ...
-            pthread_barrier_wait(&barrier);
-        }
+double jacobi(int k, int x){
+
+    double retorno, interno; double temp = 0;
+    
+    for(int j = 0; j<N; j++)
+    {
+        if(j!=x){
+            temp+=A[x][j]*X_new[j][k-1];
+        } else temp = temp;
     }
+ 
+    interno = B[x] - temp;
+    retorno = (1/A[x][x])*interno;
 
-    return NULL;
+    return retorno;
 }
 
-int main() {
-    int i, id[P];
-
-    pthread_barrier_init(&barrier, NULL, P);
-
-    for (i = 0; i < P; i++) {
-        id[i] = i;
-        pthread_create(&threads[i], NULL, jacobi_thread, &id[i]);
-    }
-
-    for (i = 0; i < P; i++) {
-        pthread_join(threads[i], NULL);
-    }
-
-    pthread_barrier_destroy(&barrier);
-
-    return 0;
-}*/
-#define _XOPEN_SOURCE 600
-/*#include <stdio.h>
-#include <pthread.h>
-
-#define N 2  // Tamanho do sistema de equações
-#define NUM_THREADS 4  // Número de threads
-
-double A[N][N] = {{2, 1}, {5, 7}};  // Matriz do sistema
-double b[N] = {11, 13};  // Vetor b
-double x[N] = {1, 1};  // Valores iniciais das incógnitas
-
-pthread_barrier_t barrier;  // Barreira para sincronização
-
-// Função para resolver uma parte das incógnitas
-void *solve_part(void *arg) {
-    long thread_id = (long)arg;
-
-    for (int k = 0; k < 10; k++) {
-        // Cálculo das incógnitas associadas a esta thread
-        for (int i = thread_id; i < N; i += NUM_THREADS) {
-            double sum = 0.0;
-            for (int j = 0; j < N; j++) {
-                if (j != i) {
-                    sum += A[i][j] * x[j];
-                }
-            }
-            double x_next = (b[i] - sum) / A[i][i];
-
-            // TODO: Atualize x[i] para x_next de forma segura
+void *calculate(void *thread_id) {
+    int id = *((int *)thread_id);
+    if(id<N){
+    pthread_mutex_lock(&mutex_uso[id]);
+    buffer_uso[id] = 1;
+    pthread_mutex_unlock(&mutex_uso[id]);
+    
+        int iteracao = 1;
+        while(iteracao-1<P)
+        {
+            X_new[id][iteracao] = jacobi(iteracao, id);
+            iteracao++;
+            pthread_barrier_wait(&barrier);    
         }
-
-        pthread_barrier_wait(&barrier);  // Barreira para sincronização
-
-        // TODO: Atualização dos valores de x para a próxima iteração
+        if(num_threads<N)
+        {
+            iteracao = 1;
+            
+            for(int i = num_threads; i<N; i++)
+            {
+                pthread_mutex_lock(&mutex_uso[i]);
+                if(!buffer_uso[i])
+                {
+                    
+                    buffer_uso[i] = 1;
+                    pthread_mutex_unlock(&mutex_uso[i]);
+                    while(iteracao-1<P)
+                    {
+                        X_new[i][iteracao] = jacobi(iteracao, i);
+                        iteracao++;
+                        pthread_barrier_wait(&barrier);
+                    }
+                }pthread_mutex_unlock(&mutex_uso[i]);
+            }
+        }
     }
-
     pthread_exit(NULL);
 }
 
 int main() {
-    pthread_t threads[NUM_THREADS];
-    pthread_barrier_init(&barrier, NULL, NUM_THREADS);
+    clock_t start, end;
+    double cpu_time_used;
 
-    // Criação das threads
-    for (long i = 0; i < NUM_THREADS; i++) {
-        pthread_create(&threads[i], NULL, solve_part, (void *)i);
+    start = clock();
+  
+    printf("Qual o numero de threads que irao ser utilizadas?\n");
+    scanf("%d",&num_threads);
+    
+    /*printf("Um sistema é NxN, qual o tamanho N do sistema?: \n");
+    scanf("%d", &N);*/
+
+    X_new = (double**) malloc(sizeof(double*)*N);
+    buffer_uso = (int*) calloc(N, sizeof(int));
+    mutex_uso = (pthread_mutex_t*) malloc(N*sizeof(pthread_mutex_t));
+
+    for(int i = 0; i<N; i++)
+    {
+        X_new[i] = (double*) malloc(sizeof(double)*(P+1));
+        X_new[i][0] = 1;       
+        pthread_mutex_init(&mutex_uso[i], NULL); 
     }
 
-    // Join das threads
-    for (int i = 0; i < NUM_THREADS; i++) {
-        pthread_join(threads[i], NULL);
+    pthread_t threads[num_threads];
+    int* thread_ids[num_threads];
+    
+    if(num_threads<N)
+        pthread_barrier_init(&barrier,NULL,num_threads);
+    else
+        pthread_barrier_init(&barrier,NULL,N);
+
+    
+    for (int i = 0; i < num_threads; i++) {//j==Num_threads-1 j=0; threads[j] threadid=incognita  //threads que forem maiores que o numero de incognitas nao serao inicializadas
+        thread_ids[i] = (int*) malloc(sizeof(int));
+        *thread_ids[i] = i;
+        pthread_create(&threads[i], NULL, calculate, (void *)thread_ids[i]);
     }
 
-    pthread_barrier_destroy(&barrier);
+       for(int i=0;i<num_threads;i++) pthread_join(threads[i],NULL);
+        pthread_barrier_destroy(&barrier);
 
-    return 0;
-}
-*/
-#include <stdio.h>
-#include <pthread.h>
-
-#define N 2  // Tamanho do sistema de equações
-#define NUM_THREADS 2  // Número de threads
-
-double A[N][N] = {{2, 1}, {5, 7}};  // Matriz do sistema
-double b[N] = {11, 13};  // Vetor b
-double x[N] = {1, 1};  // Valores iniciais das incógnitas
-
-pthread_barrier_t barrier;  // Barreira para sincronização
-
-// Função para resolver uma parte das incógnitas
-void *solve_part(void *arg) {
-    long thread_id = (long)arg;
-
-    for (int k = 0; k < 5; k++) { // Reduzi o número de iterações para facilitar a visualização
-        // Cálculo das incógnitas associadas a esta thread
-        for (int i = thread_id; i < N; i += NUM_THREADS) {
-            double sum = 0.0;
-            for (int j = 0; j < N; j++) {
-                if (j != i) {
-                    sum += A[i][j] * x[j];
-                }
-            }
-            double x_next = (b[i] - sum) / A[i][i];
-
-            // Atualização dos valores de x para a próxima iteração
-            x[i] = x_next;
-        }
-
-        pthread_barrier_wait(&barrier);  // Barreira para sincronização
-
-        // Impressão dos valores das incógnitas após cada iteração
-        printf("Iteração %d - Thread %ld: x1 = %.4f, x2 = %.4f\n", k + 1, thread_id, x[0], x[1]);
+    // Exibição da solução
+    printf("Solucao:\n");  
+    for (int i = 0; i < N; i++) {
+        printf("X%d = %lf\n", i+1, X_new[i][P]);
+        pthread_mutex_destroy(&mutex_uso[i]);
     }
+    end = clock();
+
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("Tempo de execução: %f segundos com %d threads.\n", cpu_time_used,num_threads);
+
 
     pthread_exit(NULL);
-}
-
-int main() {
-    pthread_t threads[NUM_THREADS];
-    pthread_barrier_init(&barrier, NULL, NUM_THREADS);
-
-    // Criação das threads
-    for (long i = 0; i < NUM_THREADS; i++) {
-        pthread_create(&threads[i], NULL, solve_part, (void *)i);
-    }
-
-    // Join das threads
-    for (int i = 0; i < NUM_THREADS; i++) {
-        pthread_join(threads[i], NULL);
-    }
-
-    pthread_barrier_destroy(&barrier);
-
-    return 0;
 }
