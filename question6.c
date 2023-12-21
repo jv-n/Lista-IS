@@ -22,8 +22,6 @@ float vetorDense[4] = {1.0, 2.0, 3.0, 4.0};
 float matrizDense[4][4] = {{1.0, 2.0, 3.0, 4.0}, {2.0, 3.0, 4.0, 5.0}, {3.0, 4.0, 5.0, 6.0}, {4.0, 5.0, 6.0, 7.0}};
 float resultado[4][4] = {{0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}};
 
-pthread_mutex_t lock;
-
 // Função que será executada por cada thread.
 void *threadCode(void *tid)
 {
