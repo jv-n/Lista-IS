@@ -8,11 +8,10 @@
 
 double A[N][N]= {{2,1},{5,7}}; // Matriz dos coeficientes   
 double B[]={11,13}; // Vetor de termos independentes
-//double X[]={1,1}; // Vetor solução      resultado de x1 =0.902...   x2=1.609...    x3=0.463...
 double** X_new; // Vetor solução temporário
 pthread_barrier_t barrier;
 pthread_mutex_t* mutex_uso;
-int* buffer_uso;
+int** buffer_uso;
 
 int num_threads; // Número de threads
 
@@ -36,61 +35,55 @@ double jacobi(int k, int x){
 void *calculate(void *thread_id) {
     int id = *((int *)thread_id);
     if(id<N){
+
     pthread_mutex_lock(&mutex_uso[id]);
-    buffer_uso[id] = 1;
+    buffer_uso[id][0] = 1;
     pthread_mutex_unlock(&mutex_uso[id]);
     
         int iteracao = 1;
         while(iteracao-1<P)
         {
             X_new[id][iteracao] = jacobi(iteracao, id);
-            iteracao++;
             pthread_barrier_wait(&barrier);    
-        }
-        if(num_threads<N)
-        {
-            iteracao = 1;
-            
-            for(int i = num_threads; i<N; i++)
-            {
-                pthread_mutex_lock(&mutex_uso[i]);
-                if(!buffer_uso[i])
+            if(num_threads<N) //se tem menos threads do q variaveis, escolhe uma variavel ainda n calculada ate q n haja variaveis n calculadas
+            {    
+                for(int i = num_threads; i<N; i++)
                 {
-                    
-                    buffer_uso[i] = 1;
-                    pthread_mutex_unlock(&mutex_uso[i]);
-                    while(iteracao-1<P)
+                    pthread_mutex_lock(&mutex_uso[i]);
+                    if(!buffer_uso[i][iteracao])
                     {
+                        buffer_uso[i][iteracao] = 1;
+                        pthread_mutex_unlock(&mutex_uso[i]);
                         X_new[i][iteracao] = jacobi(iteracao, i);
-                        iteracao++;
-                        pthread_barrier_wait(&barrier);
-                    }
-                }pthread_mutex_unlock(&mutex_uso[i]);
+                    }else pthread_mutex_unlock(&mutex_uso[i]);
+                }
             }
+            iteracao++;
+            pthread_barrier_wait(&barrier);
         }
     }
     pthread_exit(NULL);
 }
 
 int main() {
+    
     clock_t start, end;
     double cpu_time_used;
 
     start = clock();
-  
+
     printf("Qual o numero de threads que irao ser utilizadas?\n");
     scanf("%d",&num_threads);
-    
-    /*printf("Um sistema é NxN, qual o tamanho N do sistema?: \n");
-    scanf("%d", &N);*/
 
     X_new = (double**) malloc(sizeof(double*)*N);
-    buffer_uso = (int*) calloc(N, sizeof(int));
+    buffer_uso = (int**) malloc(N*sizeof(int*));
+
     mutex_uso = (pthread_mutex_t*) malloc(N*sizeof(pthread_mutex_t));
 
     for(int i = 0; i<N; i++)
     {
         X_new[i] = (double*) malloc(sizeof(double)*(P+1));
+        buffer_uso[i] = (int*) calloc(P, sizeof(int));
         X_new[i][0] = 1;       
         pthread_mutex_init(&mutex_uso[i], NULL); 
     }
@@ -104,7 +97,7 @@ int main() {
         pthread_barrier_init(&barrier,NULL,N);
 
     
-    for (int i = 0; i < num_threads; i++) {//j==Num_threads-1 j=0; threads[j] threadid=incognita  //threads que forem maiores que o numero de incognitas nao serao inicializadas
+    for (int i = 0; i < num_threads; i++) {
         thread_ids[i] = (int*) malloc(sizeof(int));
         *thread_ids[i] = i;
         pthread_create(&threads[i], NULL, calculate, (void *)thread_ids[i]);
@@ -119,11 +112,11 @@ int main() {
         printf("X%d = %lf\n", i+1, X_new[i][P]);
         pthread_mutex_destroy(&mutex_uso[i]);
     }
+
     end = clock();
 
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     printf("Tempo de execução: %f segundos com %d threads.\n", cpu_time_used,num_threads);
-
 
     pthread_exit(NULL);
 }

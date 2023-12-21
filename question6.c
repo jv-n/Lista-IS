@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
   {
     for (int j = 0; j < COLUNAS; j++)
     {
-      printf("%f ", resultado[i][j]);
+      printf("%.2f ", resultado[i][j]);
     }
     printf("\n");
   }
