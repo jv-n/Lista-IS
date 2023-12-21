@@ -14,7 +14,7 @@ typedef struct {
 } Par;
 
 // Define duas matrizes esparsas e um vetor denso.
-Par matriz1[4][3] = {{{3, 2.0, 1}, {1, -1.0, 1}}, {{0, -1.0, 1}, {1, 2.0, 1}, {2, -1.0, 1}}, {{1, -1.0, 1}, {2, 2.0, 1}, {3, -1.0, 1}}, {{2, -1.0, 1}, {3, 2.0, 1}}};
+Par matriz1[4][3] = {{{3, 2.0, 1}, {1, -1.0, 1}}, {{3, -1.0, 1}, {1, 2.0, 1}, {2, -1.0, 1}}, {{1, -1.0, 1}, {2, 2.0, 1}, {3, -1.0, 1}}, {{2, -1.0, 1}, {3, 2.0, 1}}};
 Par matrizEsparsa[4][3] = {{{3, 2.0, 1}, {1, -1.0, 1}}, {{0, -1.0, 1}, {1, 2.0, 1}, {2, -1.0, 1}}, {{1, -1.0, 1}, {2, 2.0, 1}, {3, -1.0, 1}}, {{2, -1.0, 1}, {3, 2.0, 1}}};
 float vetorDense[4] = {1.0, 2.0, 3.0, 4.0};
 
@@ -51,6 +51,11 @@ void *threadCode(void *tid)
         
         resultado[i][coluna] = resultado[i][coluna] * valorEsparsa;
         resultado[i][coluna] = resultado[i][coluna] * matrizDense[i][coluna];
+
+        // Devido a problemas na interpretação da linguagem C com números flutuantes, as vezes sai -0.0 invés de 0.0
+        if (resultado[i][coluna] == 0.0) {
+          resultado[i][coluna] = 0.0;
+        }
       }
     }
   }
