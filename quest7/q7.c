@@ -46,7 +46,7 @@ void entrando(int cont, int i)
 {
     pthread_mutex_lock(&mutex[cont]);
         printf("Trem %d tentando entrar na intersecao %d \n", i, cont);
-        while(intersecao[cont] == 2)
+        while(intersecao[cont] == 2)//se ha 2 trens em 1 intersecao, espera
         {
             pthread_cond_wait(&intersecao_ocupd[cont], &mutex[cont]);
         }
@@ -60,7 +60,7 @@ void saindo(int cont, int i)
 {
     pthread_mutex_lock(&mutex[cont]);
         intersecao[cont]--;
-        if(intersecao[cont]<2) pthread_cond_signal(&intersecao_ocupd[cont]);
+        if(intersecao[cont]<2) pthread_cond_signal(&intersecao_ocupd[cont]); //sinaliza que um trem saiu para quem estiver esperando
         printf("Trem %d saiu de %d, %d trens na intersecao \n", i, cont, intersecao[cont]);
     pthread_mutex_unlock(&mutex[cont]);
 
@@ -72,12 +72,12 @@ void* trem(void* threadid)
     int i = *((int*)threadid);
     while(1)
     {
-        entrando(cont, i);
+        entrando(cont, i); //entra na intersecao
         printf("Trem %d entrou em %d, %d trens na intersecao\n", i, cont, intersecao[cont]);  
-        sleep(0.5);
-        saindo(cont, i);
+        sleep(0.5); // espera 500 ms (0.5s)
+        saindo(cont, i); //sai da intersecao
         cont++;
-        if(cont == 5) cont = 0;
+        if(cont == 5) cont = 0; //se chega em 5, volta para o inicio
     }
 
     pthread_exit(NULL);

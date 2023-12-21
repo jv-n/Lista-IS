@@ -8,9 +8,6 @@
 int sum_linhas[N]; int sum_colunas[N]; int sum_Diag[2]; 
 int mat[N][N];
 
-//pthread_mutex_t* lines;
-//pthread_mutex_t* columns;
-
 void* soma_linhas();
 void* soma_colunas();
 void* soma_diagonais();
@@ -77,7 +74,7 @@ int main()
     }
 
     int magic = 0;
-    //int y = sum_Diag[0]; int z = sum_Diag[1];
+
     if(sum_Diag[0] == sum_Diag[1]) //se as diagonais n tiverem a mesma soma, a matriz não é quadrado mágico
     {
         int i = 1;
@@ -85,18 +82,16 @@ int main()
         {
             if(sum_colunas[i]!=sum_colunas[0])
             {
-                //printf("%d e %d\n", sum_colunas[i], sum_colunas[0]);
                 break;
             }
             if(sum_linhas[i]!=sum_linhas[0])
             {
-                //printf("%d e %d\n", sum_linhas[i], sum_linhas[0]);
                 break;
             }
             i++;
             if(i==N) magic = 1;
         }
-    } //else printf("%d e %d\n", sum_Diag[0], sum_Diag[1]);
+    }
 
 
     if(!magic) printf("Nao eh magica\n");
@@ -152,7 +147,6 @@ int sum_alt()
 void* soma_diagonais(void* threadid)
 {
     int idx = (*((int*)threadid)) - (N+N);
-    //printf("Thread diagonal %d iniciada\n", idx);
     int result;
     if(!idx) result = sum_main();
     else result = sum_alt();

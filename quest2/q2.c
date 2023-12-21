@@ -8,6 +8,7 @@ int* contadores = NULL;
 
 pthread_mutex_t* mutex;
 pthread_mutex_t* mutex_file;
+
 void* leitura(void* thread_id);
 
 int num_arq, num_threads, produtos;
@@ -21,13 +22,13 @@ int main(){
     printf("Quantos tipos de produtos?:\n");
     scanf("%d", &produtos);
 
-    arq_buffer = (int*) calloc(num_arq, sizeof(int));
+    arq_buffer = (int*) calloc(num_arq, sizeof(int)); //inicializa checagem de lidos e contadores como 0
     contadores = (int*) calloc(produtos, sizeof(int));
 
-    mutex = (pthread_mutex_t*) malloc(produtos*sizeof(pthread_mutex_t));
+    mutex = (pthread_mutex_t*) malloc(produtos*sizeof(pthread_mutex_t));//inicializa mutex
     mutex_file = (pthread_mutex_t*) malloc(num_arq*sizeof(pthread_mutex_t));
     
-    for(int j = 0; j<produtos; j++)
+    for(int j = 0; j<produtos; j++)//cria os mutexes
     {
         pthread_mutex_init(&mutex[j], NULL);
     }
@@ -39,17 +40,26 @@ int main(){
     pthread_t reader[num_threads];
     int* ids[num_threads];
 
-	for(int i = 0; i < num_threads; i++) 
+	for(int i = 0; i < num_threads; i++)//criia as threads
     {
         ids[i] = (int*) malloc(sizeof(int));
         *ids[i] = i;
   	    pthread_create(&reader[i], NULL, leitura,(void*)ids[i]); 
     } 
-    for(int i = 0; i<num_threads; i++)
-        {
-            pthread_join(reader[i], NULL);
-            printf("Liberando thread %d\n", i);
-        }    
+    for(int i = 0; i<num_threads; i++)//libera as threads
+    {
+        pthread_join(reader[i], NULL);
+        printf("Liberando thread %d\n", i);
+    }
+
+    for(int j = 0; j<produtos; j++) //destroi os mutexes
+    {
+        pthread_mutex_destroy(&mutex[j]);
+    }
+    for(int j = 0; j<num_arq; j++)
+    {
+        pthread_mutex_destroy(&mutex_file[j]);
+    }    
     
     printf("O valor final de cada produto foi:\n");
     for(int i = 0; i<produtos; i++)
@@ -66,7 +76,7 @@ int read_file(int i)
     FILE* dados;
     char name[100];
     char linha[100];
-    sprintf(name, "%d", i);
+    sprintf(name, "%d", i);//amenda o numero da thread para ler o arquivo
     strcat(name, ".txt");
     dados = fopen(name, "r");
     if(dados == NULL)
@@ -77,7 +87,7 @@ int read_file(int i)
     int control = 0;
     while(control<produtos)
     {
-        fscanf(dados, "%100[^\n]\n", linha);
+        fscanf(dados, "%100[^\n]\n", linha); //scaneia a linha contendo o numero de produto, control eh o indice/numero do produto
         int temp_qtd = atoi(linha);
         
         pthread_mutex_lock(&mutex[control]);
@@ -92,14 +102,14 @@ int read_file(int i)
 void* leitura(void* threadid)
 {
     int v;
-    //checa se o ciclo ta vendo certo
+    //le os arquivos com a mesma id da thread
     printf("Thread %d iniciada, lendo arquivo %d\n", *((int*) threadid), *((int*) threadid)+1);
-    read_file(*((int*)threadid)+1);
-    printf("Thread %d terminou arquivo %d\n", *((int*) threadid), *((int*) threadid)+1);
+    int a = read_file(*((int*)threadid)+1);
+    printf("Thread %d terminou arquivo %d\n", *((int*) threadid), a);
 
     if(num_threads<num_arq)
     {
-        for(int i = num_threads; i<num_arq; i++)
+        for(int i = num_threads; i<num_arq; i++)//vai checar arquivos n lidos com numero(nome)>idthread
         {
             pthread_mutex_lock(&mutex_file[i]);
             if(!arq_buffer[i])
